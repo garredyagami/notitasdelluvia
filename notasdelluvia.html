@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- Mantenemos el mismo head y estilos anteriores -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mi App de Notas</title>
+    <style>
+         * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            overflow-x: hidden;
+        }
+
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #dd1e5e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            border: 4px solid white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .header {
+            background-color: #db1241;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-button {
+            color: white;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            padding: 0 10px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .content {
+            margin-top: 80px;
+            padding: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .add-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+            z-index: 100;
+        }
+
+        .note-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .note-item {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .note-item:active {
+            transform: scale(0.98);
+        }
+
+        .context-menu {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .context-menu.active {
+            transform: translateY(0);
+        }
+
+        .context-menu-option {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .context-menu-option:last-child {
+            border-bottom: none;
+        }
+
+        .context-menu-option.delete {
+            color: #ff4444;
+        }
+
+        .editor-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 200;
+            display: none;
+        }
+
+        .editor-content {
+            height: calc(100% - 60px);
+            margin-top: 60px;
+            padding: 20px;
+        }
+
+        .note-editor {
+            width: 100%;
+            height: calc(100% - 40px);
+            border: none;
+            resize: none;
+            font-size: 16px;
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+            background: transparent;
+        }
+
+        .note-editor:focus {
+            outline: none;
+        }
+
+        .save-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 1000;
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 900;
+        }
+        /* Agregamos estilos para el título editable */
+        .title-input {
+            width: 100%;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-bottom: 2px solid #4CAF50;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            background: transparent;
+        }
+
+        .title-input:focus {
+            outline: none;
+        }
+
+        /* Ajustamos el editor para dar espacio al título */
+        .editor-content {
+            height: calc(100% - 60px);
+            margin-top: 60px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .note-editor {
+            flex-grow: 1;
+            width: 100%;
+            border: none;
+            resize: none;
+            font-size: 16px;
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+            background: transparent;
+        }
+
+        /* ... (resto de estilos igual) ... */
+    </style>
+</head>
+<body>
+    <div id="splashScreen" class="splash-screen">
+        <div class="logo">NOTAS</div>
+    </div>
+
+    <div class="header">
+        <button id="backButton" class="back-button">←</button>
+        <h1>Mis Notas</h1>
+        <div style="width: 10px"></div>
+    </div>
+    
+    <div class="content">
+        <ul id="noteList" class="note-list"></ul>
+    </div>
+
+    <button onclick="createNewNote()" class="add-btn">+</button>
+
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-option" onclick="editNote()">Editar</div>
+        <div class="context-menu-option" onclick="duplicateNote()">Duplicar</div>
+        <div class="context-menu-option delete" onclick="deleteNote()">Eliminar</div>
+        <div class="context-menu-option" onclick="closeContextMenu()">Cancelar</div>
+    </div>
+
+    <div id="editorPage" class="editor-page">
+        <div class="editor-content">
+            <input type="text" id="titleEditor" class="title-input" placeholder="Título de la nota...">
+            <textarea id="noteEditor" class="note-editor" placeholder="Escribe tu nota aquí..."></textarea>
+        </div>
+        <button onclick="saveNote()" class="save-btn">💾</button>
+    </div>
+
+    <div id="toast" class="toast">Nota guardada</div>
+
+    <div id="overlay" class="overlay"></div>
+
+    <script>
+        let currentNote = null;
+        let notes = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const splashScreen = document.getElementById('splashScreen');
+                splashScreen.style.opacity = '0';
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    loadNotes();
+                }, 500);
+            }, 2000);
+        });
+
+        function createNewNote() {
+            const note = {
+                id: Date.now(),
+                name: 'Nueva nota',  // Título temporal
+                content: '',
+                date: new Date().toLocaleDateString()
+            };
+            notes.push(note);
+            saveNotes();
+            renderNotes();
+            openEditor(note);
+        }
+
+        function renderNotes() {
+            const noteList = document.getElementById('noteList');
+            noteList.innerHTML = notes.map(note => `
+                <li class="note-item" onclick="showContextMenu(${note.id})">
+                    <strong>${note.name}</strong><br>
+                    <small>${note.date}</small>
+                </li>
+            `).join('');
+        }
+	
+	function showContextMenu(noteId) {
+            currentNote = notes.find(note => note.id === noteId);
+            document.getElementById('contextMenu').classList.add('active');
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeContextMenu() {
+            document.getElementById('contextMenu').classList.remove('active');
+            document.getElementById('overlay').style.display = 'none';
+            currentNote = null;
+        }
+
+        function editNote() {
+            closeContextMenu();
+            if (currentNote) {
+                openEditor(currentNote);
+            }
+        }
+	
+	function duplicateNote() {
+            if (currentNote) {
+                const newNote = {
+                    ...currentNote,
+                    id: Date.now(),
+                    name: `${currentNote.name} (copia)`,
+                    date: new Date().toLocaleDateString()
+                };
+                notes.push(newNote);
+                saveNotes();
+                renderNotes();
+            }
+            closeContextMenu();
+        }
+
+        function deleteNote() {
+            if (currentNote) {
+                if (confirm('¿Estás seguro de que quieres eliminar esta nota?')) {
+                    notes = notes.filter(note => note.id !== currentNote.id);
+                    saveNotes();
+                    renderNotes();
+                }
+            }
+            closeContextMenu();
+        }
+
+        function openEditor(note) {
+            currentNote = note;
+            document.getElementById('editorPage').style.display = 'block';
+            document.getElementById('backButton').style.display = 'block';
+            document.getElementById('titleEditor').value = note.name;
+            document.getElementById('noteEditor').value = note.content;
+            document.querySelector('.header h1').textContent = note.name;
+            // Enfocamos el título si es una nota nueva
+            if (note.name === 'Nueva nota') {
+                document.getElementById('titleEditor').focus();
+            }
+        }
+
+        function saveNote() {
+            if (currentNote) {
+                // Guardamos tanto el título como el contenido
+                const newTitle = document.getElementById('titleEditor').value.trim();
+                currentNote.name = newTitle || 'Sin título';
+                currentNote.content = document.getElementById('noteEditor').value;
+                currentNote.date = new Date().toLocaleDateString();
+                saveNotes();
+                
+                // Actualizamos el título en el header
+                document.querySelector('.header h1').textContent = currentNote.name;
+                
+                const toast = document.getElementById('toast');
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                    closeEditor();
+                }, 1000);
+            }
+        }
+
+       function closeEditor() {
+            document.getElementById('editorPage').style.display = 'none';
+            document.getElementById('backButton').style.display = 'none';
+            document.querySelector('.header h1').textContent = 'Mis Notas';
+            currentNote = null;
+            renderNotes();
+        }
+
+        document.getElementById('backButton').addEventListener('click', closeEditor);
+
+        function saveNotes() {
+            localStorage.setItem('notes', JSON.stringify(notes));
+        }
+
+        function loadNotes() {
+            const savedNotes = localStorage.getItem('notes');
+            if (savedNotes) {
+                notes = JSON.parse(savedNotes);
+                renderNotes();
+            }
+        }
+
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        document.getElementById('overlay').addEventListener('click', closeContextMenu);
+    </script>
+</body>
+</html>
